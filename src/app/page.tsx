@@ -95,9 +95,10 @@ export default function Home() {
         setErrorMsg(data.error || "Could not detect exercises. Try a clearer image or PDF.");
         setView("upload");
       }
-    } catch {
-      setErrorMsg("Network error. Make sure the dev server is running.");
-      setView("upload");
+    } catch (error: any) {
+      console.error(error);
+      setErrorMsg(error.message || "Something went wrong on the server.");
+    } finally {setView("upload");
     }
   };
 
