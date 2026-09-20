@@ -87,7 +87,22 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileBase64: base64, mimeType }),
       });
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const textError = await res.text();
+        if (textError.includes("Request Entity Too Large") || res.status === 413) {
+           throw new Error("File is too large! Vercel limits uploads to ~3.5 MB. Please upload a smaller PDF or a screenshot.");
+        }
+        throw new Error("Server returned an invalid response.");
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to parse");
+      }
+
       if (data.exercises && data.exercises.length > 0) {
         setExercises(data.exercises);
         setView("dashboard");
@@ -121,10 +136,25 @@ export default function Home() {
           type,
         }),
       });
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const textError = await res.text();
+        if (textError.includes("Request Entity Too Large") || res.status === 413) {
+           throw new Error("File is too large! Vercel limits uploads to ~3.5 MB. Please upload a smaller PDF or a screenshot.");
+        }
+        throw new Error("Server returned an invalid response.");
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to solve");
+      }
+
       setSolutionResult(data.result || "⚠️ Could not generate a response. Please try again.");
-    } catch {
-      setSolutionResult("⚠️ Network error. Check your connection and try again.");
+    } catch (error: any) {
+      setSolutionResult(`⚠️ ${error.message || "Network error. Check your connection and try again."}`);
     } finally {
       setSolverLoading(false);
     }
